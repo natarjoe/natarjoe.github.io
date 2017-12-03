@@ -1,0 +1,140 @@
+---
+title: "Practical Machine Learning"
+author: "Joe Natarajan"
+date: "November 30, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+For this project we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants who performed dumb bell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+our goal is to predict how they did the exercise. The labels of the 5  different ways are below
+
+.	A: exactly according to the specification 
+.	B: throwing the elbows to the front
+.	C: lifting the dumbbell only halfway 
+.	D: lowering the dumbbell only halfway
+.	E: throwing the hips to the front
+
+### Load Data
+
+```{r load}
+setwd("C:/Users/jnatarajan/OneDrive/Practical Machine Learning")
+library(caret)
+
+trainingcsv <- read.csv(file="pml-training.csv",sep = ",")
+testingcsv <- read.csv(file="pml-testing.csv",sep = ",")
+```
+
+### Investigate and cleanse data
+
+```{r warning=FALSE, results ='hide'}
+# study data before cleansing
+
+View(trainingcsv)    
+summary(trainingcsv)
+str(trainingcsv)
+View(testingcsv)    
+summary(testingcsv)
+str(testingcsv)
+
+
+# Tne results have been hidden since the output is very long. Looking at the output we find that the data needs cleansing. There are missing values and excel error #DIV/0! . Also many numbers have been loaded as factors which need to be converted.
+
+indx <- sapply(trainingcsv[,-which(names(trainingcsv)=="classe")], is.factor) # Exclude classe column. It has to be factor
+
+trainingcsv[indx] <- lapply(trainingcsv[indx], function(x) as.numeric(as.character(x)))
+
+indx <- sapply(testingcsv, is.factor)
+testingcsv[indx] <- lapply(testingcsv[indx], function(x) as.numeric(as.character(x)))
+
+trainingcsv[trainingcsv == '#DIV/0!'] <- NA
+trainingcsv[trainingcsv == ''] <- NA
+
+testingcsv[testingcsv == '#DIV/0!'] <- NA
+testingcsv[testingcsv == ''] <- NA
+
+trainingcsv$classe <- as.factor(trainingcsv$classe) 
+
+# Reviewing the data one more time  we see many columns with majority NA values. So we only include  columns that have less than 20% NA values 
+
+NoNACols <-lapply(trainingcsv, function(x) sum(is.na(x)) / length(x) ) < 0.2
+
+trainingNoNA<-trainingcsv[NoNACols]
+testingNoNA<-testingcsv[NoNACols]
+
+# Exlude column 1 that contains the row numbers
+
+trainingNoNA<-trainingNoNA[-1]
+testingNoNA<-testingNoNA[-1]
+
+```
+
+ compare column names in testing & training. The only variance should be
+ column name 'classe'
+ 
+```{r}
+
+setdiff(names(trainingNoNA),names(testingNoNA))
+
+
+# remove columns with  near zero variance or  zero variance since they 
+# will not be useful for predicting
+
+v <- nearZeroVar(trainingNoNA,saveMetrics=TRUE)
+trainingNoNA <- trainingNoNA[,v$nzv==FALSE]
+
+v <- nearZeroVar(testingNoNA,saveMetrics=TRUE)
+testingNoNA <- testingNoNA[,v$nzv==FALSE]
+
+
+```
+## Create Model
+
+We will start by selecting Random Forest as the initial predictive  model.This model automatically selects important variables and it is resistant to overfitting the training data.We will use 5-fold cross validation, We will split the data 80:20 to build our model.
+
+```{r}
+
+set.seed(54321)
+
+inTrain <- createDataPartition(trainingNoNA$classe, p = .80, list=FALSE)
+training <- trainingNoNA[inTrain,]
+crossValidation <- trainingNoNA[-inTrain,]
+
+modFit <- train(classe ~., method="rf", data=training, trControl=trainControl(method='cv'), number=5, allowParallel=TRUE )
+
+trainingPred <- predict(modFit, training)
+confusionMatrix(trainingPred, training$classe)
+
+```
+
+## Cross Validation
+
+```{r}
+
+Pred <- predict(modFit, crossValidation)
+confusionMatrix(Pred, crossValidation$classe)
+
+```
+The model has a very high accuracy rate of about 99%. So we will use our random forest model on the 20 testing cases.
+
+## Testing our model
+
+```{r}
+
+testingPred <- predict(modFit, testingNoNA)
+testingPred
+
+```
+# Conclusion
+
+The model that we have created works fine . When we apply our answers to the final quiz all our predictions are correct (100 %).
+
+
+
+
