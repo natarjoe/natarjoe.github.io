@@ -176,11 +176,10 @@ testingNoNA&lt;-testingcsv[NoNACols]
 # Exlude column 1 that contains the row numbers
 
 trainingNoNA&lt;-trainingNoNA[-1]
-testingNoNA&lt;-testingNoNA[-1]</code></pre>
-<p>compare column names in testing &amp; training. The only variance should be column name ‘classe’</p>
-<pre class="r"><code>setdiff(names(trainingNoNA),names(testingNoNA))</code></pre>
-<pre><code>## [1] &quot;classe&quot;</code></pre>
-<pre class="r"><code># remove columns with  near zero variance or  zero variance since they 
+testingNoNA&lt;-testingNoNA[-1]
+
+
+# remove columns with  near zero variance or  zero variance since they 
 # will not be useful for predicting
 
 v &lt;- nearZeroVar(trainingNoNA,saveMetrics=TRUE)
@@ -188,6 +187,9 @@ trainingNoNA &lt;- trainingNoNA[,v$nzv==FALSE]
 
 v &lt;- nearZeroVar(testingNoNA,saveMetrics=TRUE)
 testingNoNA &lt;- testingNoNA[,v$nzv==FALSE]</code></pre>
+<p>compare column names in testing &amp; training. The only variance should be column name ‘classe’</p>
+<pre class="r"><code>setdiff(names(trainingNoNA),names(testingNoNA))</code></pre>
+<pre><code>## [1] &quot;classe&quot;</code></pre>
 </div>
 </div>
 <div id="create-model" class="section level2">
@@ -277,7 +279,7 @@ confusionMatrix(Pred, crossValidation$classe)</code></pre>
 ## Detection Rate         0.2845   0.1935   0.1744   0.1639   0.1835
 ## Detection Prevalence   0.2845   0.1935   0.1744   0.1642   0.1835
 ## Balanced Accuracy      1.0000   1.0000   1.0000   0.9998   0.9993</code></pre>
-<p>The model has a very high accuracy rate of about 99%. So we will use our random forest model on the 20 testing cases.</p>
+<p>The model has a very high accuracy rate of about 99%. The error that we expect is &lt; 1%. So we will use our random forest model on the 20 testing cases.</p>
 </div>
 <div id="testing-our-model" class="section level2">
 <h2>Testing our model</h2>

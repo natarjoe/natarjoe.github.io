@@ -73,15 +73,6 @@ testingNoNA<-testingcsv[NoNACols]
 trainingNoNA<-trainingNoNA[-1]
 testingNoNA<-testingNoNA[-1]
 
-```
-
- compare column names in testing & training. The only variance should be
- column name 'classe'
- 
-```{r}
-
-setdiff(names(trainingNoNA),names(testingNoNA))
-
 
 # remove columns with  near zero variance or  zero variance since they 
 # will not be useful for predicting
@@ -92,6 +83,14 @@ trainingNoNA <- trainingNoNA[,v$nzv==FALSE]
 v <- nearZeroVar(testingNoNA,saveMetrics=TRUE)
 testingNoNA <- testingNoNA[,v$nzv==FALSE]
 
+```
+
+ compare column names in testing & training. The only variance should be
+ column name 'classe'
+ 
+```{r}
+
+setdiff(names(trainingNoNA),names(testingNoNA))
 
 ```
 ## Create Model
@@ -121,7 +120,7 @@ Pred <- predict(modFit, crossValidation)
 confusionMatrix(Pred, crossValidation$classe)
 
 ```
-The model has a very high accuracy rate of about 99%. So we will use our random forest model on the 20 testing cases.
+The model has a very high accuracy rate of about 99%. The error that we expect is < 1%. So we will use our random forest model on the 20 testing cases.
 
 ## Testing our model
 
